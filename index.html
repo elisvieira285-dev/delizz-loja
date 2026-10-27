@@ -45,6 +45,7 @@ textarea.field{min-height:90px;resize:vertical}
 .product:hover{transform:translateY(-4px);box-shadow:0 12px 28px #4a07180e}
 .product-image{height:245px;background:linear-gradient(145deg,#f8e9ec,#f2dce2);display:flex;align-items:center;justify-content:center;overflow:hidden}
 .product-image img{width:100%;height:100%;object-fit:contain;padding:8px}
+.photo-tools{display:grid;grid-template-columns:1fr;gap:8px}.photo-preview{display:none;align-items:center;gap:12px;margin-top:8px;padding:10px;border:1px dashed #d8b8c1;border-radius:10px;background:#fff9f7}.photo-preview img{width:76px;height:76px;object-fit:cover;border-radius:8px;border:1px solid #ead6dc}.photo-help{font-size:12px;color:var(--muted);margin:4px 0 0}.file-pick{display:inline-flex;align-items:center;gap:8px;background:var(--rose);color:var(--wine);padding:10px 13px;border-radius:8px;font-weight:700;cursor:pointer}.file-pick input{max-width:100%}
 .placeholder{font:24px Georgia,serif;letter-spacing:3px;color:#b77d8c}
 .product-info{padding:17px;display:flex;flex-direction:column;flex:1;align-items:stretch}
 .category{font-size:10px;letter-spacing:1.7px;text-transform:uppercase;color:#a16f7c}
@@ -481,7 +482,7 @@ body{background:linear-gradient(180deg,#fff9f6 0%,#fff5f1 100%)}
             <div class="field-group"><label for="pPrice">Preço (R$) *</label><input id="pPrice" class="field" type="number" min="0" step="0.01" required></div>
             <div class="field-group"><label for="pStock">Estoque *</label><input id="pStock" class="field" type="number" min="0" step="1" required></div>
             <div class="field-group"><label for="pType">Tipo de venda</label><select id="pType" class="field"><option>Pronta entrega</option><option>Sob encomenda</option></select></div>
-            <div class="field-group"><label for="pPhoto">URL pública da foto</label><input id="pPhoto" class="field" type="url" placeholder="https://..."></div>
+            <div class="field-group span-all"><label for="pPhotoFile">Foto do produto</label><div class="photo-tools"><label class="file-pick" for="pPhotoFile">＋ Escolher foto do computador ou celular<input id="pPhotoFile" type="file" accept="image/*" hidden></label><div id="photoPreview" class="photo-preview"><img id="photoPreviewImg" alt="Prévia da foto"><div><strong id="photoPreviewName">Foto selecionada</strong><p class="photo-help">A imagem será reduzida automaticamente para carregar mais rápido.</p><button type="button" class="outline" id="removePhotoButton">Remover foto</button></div></div><details><summary>Ou usar um link de imagem</summary><input id="pPhoto" class="field" type="url" placeholder="Cole aqui o link público da foto"><p class="photo-help">Você pode escolher um arquivo acima ou colar um link público.</p></details></div></div>
             <div class="field-group span-all"><label for="pDescription">Descrição</label><textarea id="pDescription" class="field"></textarea></div>
             <div class="field-group span-all"><label><input id="pActive" type="checkbox" checked> Produto ativo na loja</label></div>
             <div class="field-group span-all"><button id="saveProductButton" class="primary" type="submit">Salvar produto</button> <button type="button" class="outline" onclick="resetProductForm()">Limpar</button></div>
@@ -518,6 +519,7 @@ body{background:linear-gradient(180deg,#fff9f6 0%,#fff5f1 100%)}
   3) Defina o WhatsApp comercial no WHATSAPP_STORE, com DDI+DDD+número.
 */
 const API_URL = "https://script.google.com/macros/s/AKfycbyzg256PTcB-fFE_BZCHa-eNjGIOLzbvapvxm_ZT_7W3lk61as4CaLUNnC2iFH4v4N7/exec";
+let selectedPhotoData = "";
 const WHATSAPP_STORE = "5548999852871";
 
 let products = [];
@@ -558,6 +560,21 @@ function api(action, payload = {}) {
     script.src = API_URL + "?" + params.toString();
     script.onerror = () => finish(new Error("Falha de conexão com a integração. Confira a implantação do Apps Script."));
     document.body.appendChild(script);
+  });
+}
+function postApi(action, payload = {}) {
+  return new Promise((resolve, reject) => {
+    if (!apiConfigured()) return reject(new Error("A URL do Apps Script não está configurada."));
+    const frameName = "delizz_post_frame";
+    let frame = document.getElementById(frameName);
+    if (!frame) { frame = document.createElement("iframe"); frame.name = frameName; frame.id = frameName; frame.hidden = true; document.body.appendChild(frame); }
+    const form = document.createElement("form"); form.method = "POST"; form.action = API_URL; form.target = frameName; form.style.display = "none";
+    const data = { action, ...payload };
+    Object.entries(data).forEach(([key, value]) => { const input = document.createElement("input"); input.type = "hidden"; input.name = key; input.value = String(value == null ? "" : value); form.appendChild(input); });
+    let finished = false;
+    const timer = setTimeout(() => { if (!finished) { finished = true; form.remove(); reject(new Error("O envio demorou demais. Confira a conexão e tente novamente.")); } }, 15000);
+    frame.onload = () => { if (finished) return; finished = true; clearTimeout(timer); form.remove(); setTimeout(() => resolve({ok:true}), 1800); };
+    document.body.appendChild(form); form.submit();
   });
 }
 function normalizeCategory(value) {
@@ -624,7 +641,7 @@ function renderProducts(source) {
   filtered.forEach(p => {
     const card = document.createElement("article"); card.className="product";
     const photo = document.createElement("div"); photo.className="product-image";
-    if (p.photo && /^https?:\/\//i.test(p.photo)) {
+    if (p.photo && (/^https?:\/\//i.test(p.photo) || /^data:image\//i.test(p.photo))) {
       const img = document.createElement("img"); img.src=p.photo; img.alt=p.name; img.loading="lazy";
       img.onerror=()=>{photo.replaceChildren();const ph=document.createElement("span");ph.className="placeholder";ph.textContent="DELIZZ";photo.appendChild(ph);};
       photo.appendChild(img);
@@ -711,16 +728,33 @@ function adminLogin() {
   }).catch(error=>document.getElementById("loginStatus").textContent=error.message);
 }
 function adminLogout(){adminToken="";document.getElementById("adminWorkspace").classList.add("hidden");document.getElementById("adminLogin").classList.remove("hidden");document.getElementById("adminPin").value="";}
-function resetProductForm(){document.getElementById("productForm").reset();document.getElementById("editId").value="";document.getElementById("productFormTitle").textContent="Cadastrar produto";document.getElementById("pActive").checked=true;}
-document.getElementById("productForm").addEventListener("submit",e=>{
+function resetProductForm(){document.getElementById("productForm").reset();window.currentEditingPhoto="";document.getElementById("editId").value="";document.getElementById("productFormTitle").textContent="Cadastrar produto";document.getElementById("pActive").checked=true;selectedPhotoData="";document.getElementById("photoPreview").style.display="none";document.getElementById("pPhoto").value="";}
+function showPhotoPreview(src, name="Foto do produto") { const wrap=document.getElementById("photoPreview"); const img=document.getElementById("photoPreviewImg"); if(!src){wrap.style.display="none";img.removeAttribute("src");return;} img.src=src;document.getElementById("photoPreviewName").textContent=name;wrap.style.display="flex"; }
+document.getElementById("pPhotoFile").addEventListener("change", async e=>{
+  const file=e.target.files && e.target.files[0]; if(!file)return;
+  if(!file.type.startsWith("image/")){toast("Escolha um arquivo de imagem.");e.target.value="";return;}
+  try {
+    const dataUrl=await new Promise((resolve,reject)=>{const reader=new FileReader();reader.onload=()=>resolve(reader.result);reader.onerror=reject;reader.readAsDataURL(file);});
+    const img=await new Promise((resolve,reject)=>{const im=new Image();im.onload=()=>resolve(im);im.onerror=reject;im.src=dataUrl;});
+    const canvas=document.createElement("canvas"); const scale=Math.min(1,600/Math.max(img.width,img.height));canvas.width=Math.max(1,Math.round(img.width*scale));canvas.height=Math.max(1,Math.round(img.height*scale));canvas.getContext("2d").drawImage(img,0,0,canvas.width,canvas.height);
+    let quality=.72, compressed=canvas.toDataURL("image/jpeg",quality);
+    while(compressed.length>38000 && quality>.32){quality-=.08;compressed=canvas.toDataURL("image/jpeg",quality);}
+    if(compressed.length>45000){toast("A foto ficou grande demais. Escolha outra imagem menor.");e.target.value="";return;}
+    selectedPhotoData=compressed;document.getElementById("pPhoto").value="";showPhotoPreview(compressed,file.name);toast("Foto pronta para salvar.");
+  } catch(err){toast("Não consegui abrir essa imagem. Tente outra foto.");}
+});
+document.getElementById("pPhoto").addEventListener("input",()=>{if(document.getElementById("pPhoto").value.trim()){selectedPhotoData="";document.getElementById("pPhotoFile").value="";showPhotoPreview(document.getElementById("pPhoto").value.trim(),"Prévia do link");}});
+document.getElementById("removePhotoButton").addEventListener("click",()=>{selectedPhotoData="";document.getElementById("pPhotoFile").value="";document.getElementById("pPhoto").value="";showPhotoPreview("");});
+document.getElementById("productForm").addEventListener("submit",async e=>{
   e.preventDefault();
   if(!adminToken)return toast("Entre no painel primeiro.");
-  const p={id:document.getElementById("editId").value,name:document.getElementById("pName").value.trim(),category:document.getElementById("pCategory").value.trim(),price:Number(document.getElementById("pPrice").value),stock:Number(document.getElementById("pStock").value),saleType:document.getElementById("pType").value,photo:document.getElementById("pPhoto").value.trim(),description:document.getElementById("pDescription").value.trim(),active:document.getElementById("pActive").checked};
+  const existingPhoto=window.currentEditingPhoto||"";
+  const p={id:document.getElementById("editId").value,name:document.getElementById("pName").value.trim(),category:document.getElementById("pCategory").value.trim(),price:Number(document.getElementById("pPrice").value),stock:Number(document.getElementById("pStock").value),saleType:document.getElementById("pType").value,photo:selectedPhotoData || document.getElementById("pPhoto").value.trim() || existingPhoto,description:document.getElementById("pDescription").value.trim(),active:document.getElementById("pActive").checked};
   if(!Number.isFinite(p.price)||p.price<0||!Number.isInteger(p.stock)||p.stock<0)return toast("Confira preço e estoque.");
-  const button=document.getElementById("saveProductButton");button.disabled=true;
-  api("saveProduct",{token:adminToken,product:JSON.stringify(p)}).then(()=>{
-    toast("Produto salvo.");resetProductForm();loadProducts();loadAdminProducts();
-  }).catch(err=>document.getElementById("productStatus").textContent=err.message).finally(()=>button.disabled=false);
+  const button=document.getElementById("saveProductButton");button.disabled=true;button.textContent="Salvando produto...";
+  try { await postApi("saveProduct",{token:adminToken,product:JSON.stringify(p)});window.currentEditingPhoto="";toast("Produto enviado. Atualizando catálogo...");resetProductForm();await loadProducts();loadAdminProducts(); }
+  catch(err){document.getElementById("productStatus").textContent=err.message;}
+  finally{button.disabled=false;button.textContent="Salvar produto";}
 });
 function loadAdminProducts(){
   api("adminProducts",{token:adminToken}).then(result=>{
@@ -741,12 +775,12 @@ function loadAdminProducts(){
 function editProduct(p){
   document.getElementById("editId").value=p.id;document.getElementById("pName").value=p.name;document.getElementById("pCategory").value=p.category;
   document.getElementById("pPrice").value=p.price;document.getElementById("pStock").value=p.stock;document.getElementById("pType").value=p.saleType;
-  document.getElementById("pPhoto").value=p.photo||"";document.getElementById("pDescription").value=p.description||"";
+  window.currentEditingPhoto=p.photo||"";selectedPhotoData="";document.getElementById("pPhotoFile").value="";document.getElementById("pPhoto").value=(p.photo && /^https?:\/\//i.test(p.photo))?p.photo:"";showPhotoPreview(p.photo||"",p.photo?"Foto atual":"");document.getElementById("pDescription").value=p.description||"";
   document.getElementById("pActive").checked=!!p.active;document.getElementById("productFormTitle").textContent="Editar produto";
   document.getElementById("productFormTitle").scrollIntoView({behavior:"smooth"});
 }
 function toggleProduct(p){
-  api("saveProduct",{token:adminToken,product:JSON.stringify({...p,active:!p.active})}).then(()=>{loadProducts();loadAdminProducts();toast("Status atualizado.");}).catch(err=>toast(err.message));
+  postApi("saveProduct",{token:adminToken,product:JSON.stringify({...p,active:!p.active})}).then(()=>{loadProducts();loadAdminProducts();toast("Status atualizado.");}).catch(err=>toast(err.message));
 }
 function loadOrders(){
   if(!adminToken)return;
