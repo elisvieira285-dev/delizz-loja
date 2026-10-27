@@ -1,0 +1,380 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<meta name="theme-color" content="#4b0717">
+<title>DELIZZ | Beleza, cuidado e acessórios</title>
+<style>
+:root{--wine:#4b0717;--wine2:#710d28;--rose:#f0d9df;--rose2:#f9edef;--cream:#fffafa;--brown:#4b302d;--gold:#e8b7a5;--muted:#876e72;--line:#ead8dd;--white:#fff}
+*{box-sizing:border-box}html{scroll-behavior:smooth}body{margin:0;background:var(--cream);color:var(--brown);font-family:Arial,Helvetica,sans-serif;line-height:1.5}
+button,input,select,textarea{font:inherit}button{cursor:pointer;border:0;border-radius:9px;padding:12px 16px;font-weight:700;transition:.2s}button:hover{filter:brightness(.96);transform:translateY(-1px)}button:disabled{opacity:.5;cursor:not-allowed;transform:none}
+.primary{background:var(--wine2);color:#fff}.soft{background:var(--rose);color:var(--wine)}.outline{background:#fff;color:var(--wine);border:1px solid var(--line)}
+header{background:var(--wine);color:white;padding:16px clamp(16px,4vw,60px);display:flex;align-items:center;justify-content:space-between;gap:18px}
+.brand{display:flex;align-items:center;gap:18px;min-width:0}.brand-logo{width:180px;height:68px;object-fit:contain;display:none}.brand-word{font:40px Georgia,serif;letter-spacing:3px;color:var(--gold);white-space:nowrap}.brand-sub{font-size:10px;letter-spacing:2px;color:#f6dfe4}.header-actions{display:flex;align-items:center;gap:10px}.tagline{font:italic 14px Georgia,serif;color:var(--gold)}
+main{max-width:1240px;width:100%;margin:auto;padding:28px 24px 60px}
+.hero{border-radius:18px;padding:clamp(26px,5vw,58px);background:linear-gradient(120deg,#efd1d9,#f9e9ed);border:1px solid #eed9df;margin-bottom:24px}
+.eyebrow{text-transform:uppercase;letter-spacing:3px;color:var(--wine2);font-size:11px}.hero h1{font:normal clamp(32px,4.5vw,52px)/1.12 Georgia,serif;margin:15px 0;max-width:760px}.hero p{max-width:600px;margin:0 0 24px}
+.nav{display:flex;flex-wrap:wrap;gap:9px;margin:22px 0 28px}.nav button.active{background:var(--wine2);color:#fff}.section-title{font:normal clamp(27px,3vw,35px) Georgia,serif;margin:0 0 5px}.muted{color:var(--muted)}.filters{display:grid;grid-template-columns:minmax(0,1fr) minmax(190px,250px);gap:12px;margin:22px 0}
+.field{width:100%;min-width:0;border:1px solid var(--line);border-radius:8px;padding:12px;background:white;color:var(--brown)}textarea.field{min-height:90px;resize:vertical}
+.grid{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:18px}.product{border:1px solid var(--line);border-radius:13px;background:white;overflow:hidden;display:flex;flex-direction:column;min-width:0}.product-image{height:220px;background:#f7ebee;display:flex;align-items:center;justify-content:center;overflow:hidden}.product-image img{width:100%;height:100%;object-fit:contain}.placeholder{font:22px Georgia,serif;letter-spacing:2px;color:#b67e8c}.product-info{padding:15px;display:flex;flex-direction:column;flex:1;align-items:stretch}.category{font-size:10px;letter-spacing:1.5px;text-transform:uppercase;color:#a16f7c}.product h3{font-size:16px;line-height:1.4;margin:7px 0}.description{font-size:13px;color:var(--muted);margin:0 0 10px;white-space:pre-wrap}.price{font-size:20px;color:var(--wine2);font-weight:bold;margin-top:auto;padding-top:8px}.stock{font-size:12px;color:#64764d;margin:5px 0 13px}.product button{width:100%}
+.panel{background:white;border:1px solid var(--line);border-radius:14px;padding:22px;margin-bottom:18px}.form-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:15px}.field-group{min-width:0}.field-group label{display:block;font-size:13px;margin-bottom:6px}.span-all{grid-column:1/-1}.status{font-size:13px;overflow-wrap:anywhere}.hidden{display:none!important}
+.cart-list{display:grid;gap:12px}.cart-item{display:grid;grid-template-columns:minmax(0,1fr) auto;gap:14px;align-items:center;padding:16px;background:white;border:1px solid var(--line);border-radius:11px}.cart-item h3{font-size:15px;margin:0 0 5px;overflow-wrap:anywhere}.cart-item p{margin:3px 0;font-size:13px;color:var(--muted)}.cart-controls{display:flex;align-items:center;justify-content:flex-end;gap:7px;flex-wrap:wrap}.small{padding:8px 11px;background:var(--rose);color:var(--wine)}.remove{padding:8px 10px;background:#fff;border:1px solid var(--line);color:#9b2f43}.summary{margin-top:18px;background:var(--rose2);padding:20px;border-radius:12px}.total{display:flex;justify-content:space-between;gap:12px;flex-wrap:wrap;font-size:20px;color:var(--wine);font-weight:bold;margin-bottom:16px}.empty{padding:24px;border:1px solid var(--line);background:white;border-radius:12px;color:var(--muted)}
+.admin-note{font-size:12px;color:var(--muted);line-height:1.6}footer{background:var(--wine);color:#f5dfe4;text-align:center;padding:28px 16px;font-size:12px}
+.toast{position:fixed;bottom:18px;left:50%;transform:translateX(-50%);background:var(--wine);color:white;padding:12px 18px;border-radius:10px;z-index:10;max-width:calc(100% - 30px);box-shadow:0 5px 25px #0002}
+@media(max-width:950px){.grid{grid-template-columns:repeat(3,minmax(0,1fr))}.tagline{display:none}}
+@media(max-width:650px){header{padding:13px 15px;align-items:flex-start}.brand{gap:8px;flex-wrap:wrap}.brand-word{font-size:29px}.brand-sub{font-size:9px;letter-spacing:1px}.brand-logo{width:125px;height:48px}.header-actions button{padding:10px;font-size:12px}.header-actions .admin-shortcut{display:none}main{padding:18px 14px 40px}.hero{padding:26px 20px}.hero h1{font-size:34px}.filters{grid-template-columns:1fr}.grid{grid-template-columns:repeat(2,minmax(0,1fr));gap:11px}.product-image{height:155px}.product-info{padding:11px}.product h3{font-size:14px}.price{font-size:18px}.product button{padding:10px 6px;font-size:12px}.form-grid{grid-template-columns:1fr}.span-all{grid-column:auto}.panel{padding:15px}.cart-item{grid-template-columns:1fr}.cart-controls{justify-content:flex-start}}
+@media(max-width:360px){.grid{grid-template-columns:1fr}.header-actions{gap:5px}}
+</style>
+</head>
+<body>
+<header>
+  <div class="brand">
+    <img id="brandLogo" class="brand-logo" alt="DELIZZ">
+    <div id="brandWord" class="brand-word">DELIZZ ♡</div>
+    <div class="brand-sub">BELEZA, CUIDADO E ACESSÓRIOS</div>
+  </div>
+  <div class="header-actions">
+    <span class="tagline">Uma escolha especial para você</span>
+    <button class="soft" onclick="showPage('cart')">Sacola (<span id="cartCount">0</span>)</button>
+    <button class="soft admin-shortcut" onclick="showPage('admin')">Administração</button>
+  </div>
+</header>
+<main>
+  <section class="hero">
+    <div class="eyebrow">Bem-vinda à DELIZZ</div>
+    <h1>Seu momento de se cuidar.</h1>
+    <p>Descubra produtos de beleza, skincare e acessórios escolhidos para deixar seus dias ainda mais especiais.</p>
+    <button class="primary" onclick="showPage('shop')">Explorar produtos</button>
+  </section>
+
+  <nav class="nav">
+    <button id="navShop" class="active" onclick="showPage('shop')">Minha loja</button>
+    <button id="navCart" class="soft" onclick="showPage('cart')">Minha sacola</button>
+    <button id="navAdmin" class="soft" onclick="showPage('admin')">Painel administrativo</button>
+  </nav>
+
+  <section id="pageShop">
+    <h2 class="section-title">Nossa seleção</h2>
+    <p class="muted">Encontre seus próximos favoritos.</p>
+    <div class="filters">
+      <input id="search" class="field" type="search" placeholder="Buscar produtos..." aria-label="Buscar produtos">
+      <select id="categoryFilter" class="field" aria-label="Filtrar categoria"><option value="">Todas as categorias</option></select>
+    </div>
+    <p id="loading" class="muted">Conectando à loja...</p>
+    <div id="productGrid" class="grid"></div>
+  </section>
+
+  <section id="pageCart" class="hidden">
+    <h2 class="section-title">Minha sacola</h2>
+    <p class="muted">Confira sua seleção antes de continuar.</p>
+    <div id="cartList" class="cart-list"></div>
+    <div id="cartSummary" class="summary hidden">
+      <div class="total"><span>Total dos produtos</span><span id="cartTotal">R$ 0,00</span></div>
+      <div class="panel">
+        <h3>Seus dados</h3>
+        <div class="form-grid">
+          <div class="field-group"><label for="customerName">Nome *</label><input id="customerName" class="field" maxlength="100" required></div>
+          <div class="field-group"><label for="customerPhone">Seu WhatsApp *</label><input id="customerPhone" class="field" type="tel" maxlength="25" placeholder="(00) 00000-0000" required></div>
+          <div class="field-group span-all"><label for="orderNotes">Observações</label><textarea id="orderNotes" class="field" placeholder="Dúvidas, endereço ou detalhes da encomenda"></textarea></div>
+        </div>
+      </div>
+      <button id="checkoutButton" class="primary" style="width:100%" onclick="checkout()">Enviar pedido pelo WhatsApp</button>
+      <p class="admin-note">O pedido será registrado na planilha quando a integração estiver configurada. A compra depende da confirmação da loja, pagamento e entrega.</p>
+    </div>
+  </section>
+
+  <section id="pageAdmin" class="hidden">
+    <h2 class="section-title">Painel administrativo</h2>
+    <p class="muted">Gerencie catálogo, estoque e pedidos da DELIZZ.</p>
+    <div id="adminLogin" class="panel">
+      <h3>Acesso administrativo</h3>
+      <p class="admin-note">Digite o PIN administrativo definido na configuração do Google Apps Script. Não use seu PIN bancário nem uma senha reutilizada.</p>
+      <div class="form-grid">
+        <div class="field-group"><label for="adminPin">PIN administrativo</label><input id="adminPin" class="field" type="password" autocomplete="current-password"></div>
+        <div class="field-group" style="align-self:end"><button class="primary" onclick="adminLogin()">Entrar</button></div>
+      </div>
+      <p id="loginStatus" class="status" role="status"></p>
+    </div>
+
+    <div id="adminWorkspace" class="hidden">
+      <div class="panel">
+        <h3 id="productFormTitle">Cadastrar produto</h3>
+        <form id="productForm">
+          <input id="editId" type="hidden">
+          <div class="form-grid">
+            <div class="field-group"><label for="pName">Nome *</label><input id="pName" class="field" required maxlength="150"></div>
+            <div class="field-group"><label for="pCategory">Categoria *</label><input id="pCategory" class="field" required maxlength="80" placeholder="Skincare, maquiagem..."></div>
+            <div class="field-group"><label for="pPrice">Preço (R$) *</label><input id="pPrice" class="field" type="number" min="0" step="0.01" required></div>
+            <div class="field-group"><label for="pStock">Estoque *</label><input id="pStock" class="field" type="number" min="0" step="1" required></div>
+            <div class="field-group"><label for="pType">Tipo de venda</label><select id="pType" class="field"><option>Pronta entrega</option><option>Sob encomenda</option></select></div>
+            <div class="field-group"><label for="pPhoto">URL pública da foto</label><input id="pPhoto" class="field" type="url" placeholder="https://..."></div>
+            <div class="field-group span-all"><label for="pDescription">Descrição</label><textarea id="pDescription" class="field"></textarea></div>
+            <div class="field-group span-all"><label><input id="pActive" type="checkbox" checked> Produto ativo na loja</label></div>
+            <div class="field-group span-all"><button id="saveProductButton" class="primary" type="submit">Salvar produto</button> <button type="button" class="outline" onclick="resetProductForm()">Limpar</button></div>
+          </div>
+          <p id="productStatus" class="status" role="status"></p>
+        </form>
+      </div>
+      <div class="panel">
+        <h3>Produtos cadastrados</h3>
+        <div id="adminProducts" class="cart-list"></div>
+      </div>
+      <div class="panel">
+        <h3>Pedidos recebidos</h3>
+        <button class="soft" onclick="loadOrders()">Atualizar pedidos</button>
+        <div id="adminOrders" class="cart-list" style="margin-top:14px"></div>
+      </div>
+      <button class="outline" onclick="adminLogout()">Sair do painel</button>
+    </div>
+  </section>
+</main>
+<footer><strong>DELIZZ ♡</strong><br>Beleza, cuidado e acessórios<br>Uma escolha especial para você.</footer>
+<div id="toast" class="toast hidden" role="status"></div>
+
+<script>
+/*
+  CONFIGURAÇÃO:
+  1) Publique o Google Apps Script como aplicativo da web.
+  2) Cole a URL terminada em /exec no API_URL.
+  3) Defina o WhatsApp comercial no WHATSAPP_STORE, com DDI+DDD+número.
+*/
+const API_URL = "COLE_AQUI_A_URL_DO_APPS_SCRIPT_TERMINADA_EM_EXEC";
+const WHATSAPP_STORE = ""; // Exemplo: 5548999999999
+
+let products = [];
+let cart = [];
+let adminToken = "";
+
+function money(value) {
+  return Number(value || 0).toLocaleString("pt-BR", {style:"currency",currency:"BRL"});
+}
+function safeText(value) { return String(value == null ? "" : value); }
+function toast(message) {
+  const el = document.getElementById("toast");
+  el.textContent = message;
+  el.classList.remove("hidden");
+  setTimeout(() => el.classList.add("hidden"), 3200);
+}
+function apiConfigured() {
+  return API_URL.startsWith("https://script.google.com/macros/s/") && API_URL.endsWith("/exec");
+}
+function api(action, payload = {}) {
+  if (!apiConfigured()) return Promise.reject(new Error("Configure a URL do Google Apps Script no início do arquivo index.html."));
+  return new Promise((resolve, reject) => {
+    const callback = "delizz_cb_" + Math.random().toString(36).slice(2);
+    const script = document.createElement("script");
+    const timer = setTimeout(() => finish(new Error("Tempo esgotado ao conectar à planilha.")), 15000);
+    function finish(error, result) {
+      clearTimeout(timer);
+      delete window[callback];
+      script.remove();
+      error ? reject(error) : resolve(result);
+    }
+    window[callback] = result => {
+      if (!result || result.ok === false) return finish(new Error(result && result.error || "Não foi possível concluir."));
+      finish(null, result);
+    };
+    const params = new URLSearchParams({action, callback, ...payload});
+    script.src = API_URL + "?" + params.toString();
+    script.onerror = () => finish(new Error("Falha de conexão com a integração. Confira a implantação do Apps Script."));
+    document.body.appendChild(script);
+  });
+}
+function showPage(page) {
+  const pages = {shop:"pageShop",cart:"pageCart",admin:"pageAdmin"};
+  Object.entries(pages).forEach(([key,id]) => document.getElementById(id).classList.toggle("hidden", key !== page));
+  [["shop","navShop"],["cart","navCart"],["admin","navAdmin"]].forEach(([key,id]) => {
+    const b = document.getElementById(id);
+    b.classList.toggle("active",key===page);
+    b.classList.toggle("soft",key!==page);
+  });
+  if (page === "shop") loadProducts();
+  if (page === "cart") renderCart();
+  window.scrollTo({top:0,behavior:"smooth"});
+}
+function loadProducts() {
+  const loading = document.getElementById("loading");
+  loading.classList.remove("hidden");
+  loading.textContent = apiConfigured() ? "Carregando produtos..." : "Integração pendente: configure a URL do Apps Script para carregar produtos.";
+  if (!apiConfigured()) { renderProducts([]); return; }
+  api("products").then(result => {
+    products = result.products || [];
+    updateCategories();
+    renderProducts(products);
+    loading.classList.add("hidden");
+  }).catch(error => {
+    loading.textContent = error.message;
+    renderProducts([]);
+  });
+}
+function updateCategories() {
+  const select = document.getElementById("categoryFilter");
+  const current = select.value;
+  select.replaceChildren(new Option("Todas as categorias",""));
+  [...new Set(products.map(p=>p.category).filter(Boolean))].sort((a,b)=>a.localeCompare(b,"pt-BR")).forEach(c=>select.add(new Option(c,c)));
+  select.value = current;
+}
+function renderProducts(source) {
+  const grid = document.getElementById("productGrid");
+  grid.replaceChildren();
+  const term = document.getElementById("search").value.toLowerCase().trim();
+  const category = document.getElementById("categoryFilter").value;
+  const filtered = source.filter(p => [p.name,p.category,p.description].join(" ").toLowerCase().includes(term) && (!category || p.category === category));
+  if (!filtered.length) {
+    const empty = document.createElement("div");
+    empty.className = "empty";
+    empty.textContent = products.length ? "Nenhum produto encontrado com esses filtros." : "Em breve, novidades especiais por aqui.";
+    grid.appendChild(empty); return;
+  }
+  filtered.forEach(p => {
+    const card = document.createElement("article"); card.className="product";
+    const photo = document.createElement("div"); photo.className="product-image";
+    if (p.photo && /^https?:\/\//i.test(p.photo)) {
+      const img = document.createElement("img"); img.src=p.photo; img.alt=p.name; img.loading="lazy";
+      img.onerror=()=>{photo.replaceChildren();const ph=document.createElement("span");ph.className="placeholder";ph.textContent="DELIZZ";photo.appendChild(ph);};
+      photo.appendChild(img);
+    } else {const ph=document.createElement("span");ph.className="placeholder";ph.textContent="DELIZZ";photo.appendChild(ph);}
+    const info=document.createElement("div");info.className="product-info";
+    const cat=document.createElement("div");cat.className="category";cat.textContent=p.category||"Outros";
+    const name=document.createElement("h3");name.textContent=p.name;
+    const desc=document.createElement("p");desc.className="description";desc.textContent=p.description||"";
+    const price=document.createElement("div");price.className="price";price.textContent=money(p.price);
+    const stock=document.createElement("div");stock.className="stock";stock.textContent=p.saleType==="Sob encomenda"?"Sob encomenda":Number(p.stock)>0?`Disponível: ${p.stock} unidade(s)`:"Indisponível";
+    const button=document.createElement("button");button.className="primary";button.textContent=p.saleType==="Sob encomenda"?"Solicitar encomenda":"Adicionar à sacola";
+    button.disabled=p.saleType!=="Sob encomenda" && Number(p.stock)<1;
+    button.onclick=()=>addToCart(p);
+    info.append(cat,name,desc,price,stock,button);card.append(photo,info);grid.appendChild(card);
+  });
+}
+function addToCart(p) {
+  const existing=cart.find(i=>i.id===p.id);
+  if (existing) {
+    if (p.saleType!=="Sob encomenda" && existing.quantity>=Number(p.stock)) return toast("Quantidade máxima disponível atingida.");
+    existing.quantity++;
+  } else cart.push({id:p.id,name:p.name,price:Number(p.price),stock:Number(p.stock),saleType:p.saleType,quantity:1});
+  updateCartCount();toast("Produto adicionado à sacola."); 
+}
+function updateCartCount(){document.getElementById("cartCount").textContent=cart.reduce((s,i)=>s+i.quantity,0);}
+function changeQuantity(id,delta) {
+  const item=cart.find(i=>i.id===id);if(!item)return;
+  const next=item.quantity+delta;
+  if(next<1){cart=cart.filter(i=>i.id!==id);}
+  else if(item.saleType!=="Sob encomenda"&&next>item.stock)return toast("Quantidade maior que o estoque disponível.");
+  else item.quantity=next;
+  updateCartCount();renderCart();
+}
+function renderCart() {
+  const list=document.getElementById("cartList");list.replaceChildren();
+  const summary=document.getElementById("cartSummary");
+  if(!cart.length){const e=document.createElement("div");e.className="empty";e.textContent="Sua sacola está vazia. Volte à loja para escolher seus produtos.";list.appendChild(e);summary.classList.add("hidden");return;}
+  summary.classList.remove("hidden");
+  cart.forEach(item=>{
+    const row=document.createElement("div");row.className="cart-item";
+    const detail=document.createElement("div");
+    const name=document.createElement("h3");name.textContent=item.name;
+    const unit=document.createElement("p");unit.textContent=money(item.price)+" por unidade";
+    const subtotal=document.createElement("p");subtotal.textContent="Subtotal: "+money(item.price*item.quantity);
+    const type=document.createElement("p");type.textContent=item.saleType==="Sob encomenda"?"Sob encomenda":"Pronta entrega";
+    detail.append(name,unit,subtotal,type);
+    const controls=document.createElement("div");controls.className="cart-controls";
+    const minus=document.createElement("button");minus.className="small";minus.textContent="−";minus.onclick=()=>changeQuantity(item.id,-1);
+    const count=document.createElement("strong");count.textContent=item.quantity;
+    const plus=document.createElement("button");plus.className="small";plus.textContent="+";plus.onclick=()=>changeQuantity(item.id,1);
+    const remove=document.createElement("button");remove.className="remove";remove.textContent="Remover";remove.onclick=()=>{cart=cart.filter(i=>i.id!==item.id);updateCartCount();renderCart();};
+    controls.append(minus,count,plus,remove);row.append(detail,controls);list.appendChild(row);
+  });
+  document.getElementById("cartTotal").textContent=money(cart.reduce((s,i)=>s+i.price*i.quantity,0));
+}
+function checkout() {
+  const name=document.getElementById("customerName").value.trim();
+  const phone=document.getElementById("customerPhone").value.trim();
+  const notes=document.getElementById("orderNotes").value.trim();
+  if(!name||!phone)return toast("Preencha seu nome e WhatsApp.");
+  if(!WHATSAPP_STORE)return toast("Configure o WhatsApp comercial no início do index.html.");
+  if(!cart.length)return toast("Sua sacola está vazia.");
+  const total=cart.reduce((s,i)=>s+i.price*i.quantity,0);
+  const order={customer:name,phone,notes,total,items:cart.map(i=>({id:i.id,name:i.name,price:i.price,quantity:i.quantity,saleType:i.saleType}))};
+  const button=document.getElementById("checkoutButton");button.disabled=true;button.textContent="Registrando pedido...";
+  api("createOrder",{order:JSON.stringify(order)}).then(result=>{
+    const message="Olá! Gostaria de fazer um pedido na DELIZZ.\nPedido: "+result.orderId+"\nCliente: "+name+"\nWhatsApp: "+phone+"\n\n"+
+      order.items.map(i=>`• ${i.name} — ${i.quantity} x ${money(i.price)}${i.saleType==="Sob encomenda"?" (sob encomenda)":""}`).join("\n")+
+      "\n\nTotal dos produtos: "+money(total)+(notes?"\nObservações: "+notes:"")+"\n\nAguardo confirmação de disponibilidade, pagamento e entrega.";
+    window.open("https://wa.me/"+WHATSAPP_STORE+"?text="+encodeURIComponent(message),"_blank","noopener");
+    toast("Pedido registrado. Continue a conversa no WhatsApp.");
+    cart=[];updateCartCount();renderCart();
+  }).catch(error=>toast("Não foi possível registrar o pedido: "+error.message))
+    .finally(()=>{button.disabled=false;button.textContent="Enviar pedido pelo WhatsApp";});
+}
+function adminLogin() {
+  const pin=document.getElementById("adminPin").value;
+  if(!pin)return document.getElementById("loginStatus").textContent="Digite o PIN.";
+  api("adminLogin",{pin}).then(result=>{
+    adminToken=result.token;
+    document.getElementById("adminLogin").classList.add("hidden");
+    document.getElementById("adminWorkspace").classList.remove("hidden");
+    loadAdminProducts();loadOrders();
+  }).catch(error=>document.getElementById("loginStatus").textContent=error.message);
+}
+function adminLogout(){adminToken="";document.getElementById("adminWorkspace").classList.add("hidden");document.getElementById("adminLogin").classList.remove("hidden");document.getElementById("adminPin").value="";}
+function resetProductForm(){document.getElementById("productForm").reset();document.getElementById("editId").value="";document.getElementById("productFormTitle").textContent="Cadastrar produto";document.getElementById("pActive").checked=true;}
+document.getElementById("productForm").addEventListener("submit",e=>{
+  e.preventDefault();
+  if(!adminToken)return toast("Entre no painel primeiro.");
+  const p={id:document.getElementById("editId").value,name:document.getElementById("pName").value.trim(),category:document.getElementById("pCategory").value.trim(),price:Number(document.getElementById("pPrice").value),stock:Number(document.getElementById("pStock").value),saleType:document.getElementById("pType").value,photo:document.getElementById("pPhoto").value.trim(),description:document.getElementById("pDescription").value.trim(),active:document.getElementById("pActive").checked};
+  if(!Number.isFinite(p.price)||p.price<0||!Number.isInteger(p.stock)||p.stock<0)return toast("Confira preço e estoque.");
+  const button=document.getElementById("saveProductButton");button.disabled=true;
+  api("saveProduct",{token:adminToken,product:JSON.stringify(p)}).then(()=>{
+    toast("Produto salvo.");resetProductForm();loadProducts();loadAdminProducts();
+  }).catch(err=>document.getElementById("productStatus").textContent=err.message).finally(()=>button.disabled=false);
+});
+function loadAdminProducts(){
+  api("adminProducts",{token:adminToken}).then(result=>{
+    const area=document.getElementById("adminProducts");area.replaceChildren();
+    (result.products||[]).forEach(p=>{
+      const row=document.createElement("div");row.className="cart-item";
+      const info=document.createElement("div");const h=document.createElement("h3");h.textContent=p.name;
+      const d=document.createElement("p");d.textContent=`${p.category} • ${money(p.price)} • Estoque: ${p.stock} • ${p.active?"Ativo":"Inativo"}`;
+      info.append(h,d);
+      const controls=document.createElement("div");controls.className="cart-controls";
+      const edit=document.createElement("button");edit.className="small";edit.textContent="Editar";edit.onclick=()=>editProduct(p);
+      const toggle=document.createElement("button");toggle.className="outline";toggle.textContent=p.active?"Desativar":"Ativar";toggle.onclick=()=>toggleProduct(p);
+      controls.append(edit,toggle);row.append(info,controls);area.appendChild(row);
+    });
+    if(!area.children.length)area.textContent="Nenhum produto cadastrado ainda.";
+  }).catch(err=>document.getElementById("productStatus").textContent=err.message);
+}
+function editProduct(p){
+  document.getElementById("editId").value=p.id;document.getElementById("pName").value=p.name;document.getElementById("pCategory").value=p.category;
+  document.getElementById("pPrice").value=p.price;document.getElementById("pStock").value=p.stock;document.getElementById("pType").value=p.saleType;
+  document.getElementById("pPhoto").value=p.photo||"";document.getElementById("pDescription").value=p.description||"";
+  document.getElementById("pActive").checked=!!p.active;document.getElementById("productFormTitle").textContent="Editar produto";
+  document.getElementById("productFormTitle").scrollIntoView({behavior:"smooth"});
+}
+function toggleProduct(p){
+  api("saveProduct",{token:adminToken,product:JSON.stringify({...p,active:!p.active})}).then(()=>{loadProducts();loadAdminProducts();toast("Status atualizado.");}).catch(err=>toast(err.message));
+}
+function loadOrders(){
+  if(!adminToken)return;
+  api("adminOrders",{token:adminToken}).then(result=>{
+    const area=document.getElementById("adminOrders");area.replaceChildren();
+    (result.orders||[]).forEach(o=>{
+      const row=document.createElement("div");row.className="cart-item";
+      const info=document.createElement("div");const h=document.createElement("h3");h.textContent=`Pedido ${o.id} • ${o.customer}`;
+      const d=document.createElement("p");d.textContent=`${o.date} • ${money(o.total)} • ${o.status}`;
+      const items=document.createElement("p");items.textContent=o.itemsSummary||"";
+      info.append(h,d,items);
+      const controls=document.createElement("div");controls.className="cart-controls";
+      const select=document.createElement("select");select.className="field";["Recebido","Em separação","Aguardando pagamento","Enviado/entregue","Cancelado"].forEach(s=>select.add(new Option(s,s)));select.value=o.status;
+      const save=document.createElement("button");save.className="small";save.textContent="Atualizar";save.onclick=()=>api("updateOrder",{token:adminToken,id:o.id,status:select.value}).then(()=>{toast("Status atualizado.");loadOrders();}).catch(e=>toast(e.message));
+      controls.append(select,save);row.append(info,controls);area.appendChild(row);
+    });
+    if(!area.children.length)area.textContent="Nenhum pedido registrado.";
+  }).catch(err=>document.getElementById("adminOrders").textContent=err.message);
+}
+document.getElementById("search").addEventListener("input",()=>renderProducts(products));
+document.getElementById("categoryFilter").addEventListener("change",()=>renderProducts(products));
+loadProducts();
+</script>
+</body>
+</html>
