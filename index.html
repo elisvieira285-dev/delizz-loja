@@ -500,7 +500,7 @@ body{background:linear-gradient(180deg,#fff9f6 0%,#fff5f1 100%)}
             <div class="field-group"><label for="pPrice">Preço (R$) *</label><input id="pPrice" class="field" type="number" min="0" step="0.01" required></div>
             <div class="field-group"><label for="pStock">Estoque *</label><input id="pStock" class="field" type="number" min="0" step="1" required></div>
             <div class="field-group"><label for="pType">Tipo de venda</label><select id="pType" class="field"><option>Pronta entrega</option><option>Sob encomenda</option></select></div>
-            <div class="field-group"><label for="pPhoto">URL pública da foto</label><input id="pPhoto" class="field" type="url" placeholder="https://..."></div>
+            <div class="field-group span-all"><label for="pPhotoFile">Foto do produto</label><input id="pPhotoFile" class="field" type="file" accept="image/*"><small class="admin-note">Escolha uma foto do computador ou celular. A imagem será enviada para o Google Drive da loja.</small><div id="photoPreviewWrap" class="hidden" style="margin-top:10px;display:flex;align-items:center;gap:12px"><img id="photoPreview" alt="Prévia da foto" style="width:88px;height:88px;object-fit:cover;border-radius:10px;border:1px solid #ead7d5"><span id="photoPreviewText" class="admin-note">Foto selecionada</span></div><input id="pPhoto" type="hidden" value=""></div>
             <div class="field-group span-all"><label for="pDescription">Descrição</label><textarea id="pDescription" class="field"></textarea></div>
             <div class="field-group span-all"><label><input id="pActive" type="checkbox" checked> Produto ativo na loja</label></div>
             <div class="field-group span-all"><button id="saveProductButton" class="primary" type="submit">Salvar produto</button> <button type="button" class="outline" onclick="resetProductForm()">Limpar</button></div>
@@ -755,16 +755,64 @@ function adminLogin() {
   }).catch(error=>document.getElementById("loginStatus").textContent=error.message);
 }
 function adminLogout(){adminToken="";document.getElementById("adminWorkspace").classList.add("hidden");document.getElementById("adminLogin").classList.remove("hidden");document.getElementById("adminPin").value="";}
-function resetProductForm(){document.getElementById("productForm").reset();document.getElementById("editId").value="";document.getElementById("productFormTitle").textContent="Cadastrar produto";document.getElementById("pActive").checked=true;}
+function resetProductForm(){document.getElementById("productForm").reset();document.getElementById("editId").value="";document.getElementById("pPhoto").value="";document.getElementById("pPhotoFile").value="";selectedProductPhoto=null;document.getElementById("photoPreviewWrap").classList.add("hidden");document.getElementById("productFormTitle").textContent="Cadastrar produto";document.getElementById("pActive").checked=true;}
+let selectedProductPhoto = null;
+document.getElementById("pPhotoFile").addEventListener("change", async e=>{
+  const file=e.target.files && e.target.files[0];
+  selectedProductPhoto=file||null;
+  if(!file){document.getElementById("photoPreviewWrap").classList.add("hidden");return;}
+  if(!file.type.startsWith("image/")){selectedProductPhoto=null;e.target.value="";return toast("Selecione um arquivo de imagem.");}
+  const preview=document.getElementById("photoPreview");
+  preview.src=URL.createObjectURL(file);
+  document.getElementById("photoPreviewText").textContent=file.name;
+  document.getElementById("photoPreviewWrap").classList.remove("hidden");
+});
+function imageFileToDataUrl(file){
+  return new Promise((resolve,reject)=>{
+    const reader=new FileReader();reader.onerror=()=>reject(new Error("Não foi possível ler a foto."));
+    reader.onload=()=>{
+      const img=new Image();img.onerror=()=>reject(new Error("Não foi possível abrir a imagem."));
+      img.onload=()=>{
+        const max=1400,scale=Math.min(1,max/Math.max(img.width,img.height));
+        const canvas=document.createElement("canvas");canvas.width=Math.round(img.width*scale);canvas.height=Math.round(img.height*scale);
+        canvas.getContext("2d").drawImage(img,0,0,canvas.width,canvas.height);
+        let quality=.82,data=canvas.toDataURL("image/jpeg",quality);
+        while(data.length>1800000 && quality>.48){quality-=.08;data=canvas.toDataURL("image/jpeg",quality);}
+        if(data.length>1800000)return reject(new Error("A foto ficou muito grande. Escolha uma imagem menor."));
+        resolve(data);
+      };img.src=reader.result;
+    };reader.readAsDataURL(file);
+  });
+}
+function uploadProductPhoto(file){
+  return imageFileToDataUrl(file).then(dataUrl=>new Promise((resolve,reject)=>{
+    const requestId="dlz_photo_"+Date.now()+"_"+Math.random().toString(36).slice(2);
+    const iframe=document.createElement("iframe");iframe.name=requestId;iframe.style.display="none";
+    const form=document.createElement("form");form.method="POST";form.action=API_URL;form.target=requestId;form.style.display="none";
+    const fields={action:"uploadPhoto",token:adminToken,requestId,imageData:dataUrl,filename:file.name||"produto.jpg"};
+    Object.entries(fields).forEach(([name,value])=>{const input=document.createElement("input");input.type="hidden";input.name=name;input.value=value;form.appendChild(input);});
+    const cleanup=()=>{window.removeEventListener("message",onMessage);form.remove();iframe.remove();};
+    const timer=setTimeout(()=>{cleanup();reject(new Error("Tempo esgotado ao enviar a foto. Tente novamente."));},60000);
+    function onMessage(event){
+      const d=event.data;
+      if(!d||d.requestId!==requestId)return;
+      clearTimeout(timer);cleanup();
+      if(d.ok&&d.url)resolve(d.url);else reject(new Error(d.error||"Não foi possível salvar a foto no Drive."));
+    }
+    window.addEventListener("message",onMessage);document.body.append(iframe,form);form.submit();
+  }));
+}
 document.getElementById("productForm").addEventListener("submit",e=>{
   e.preventDefault();
   if(!adminToken)return toast("Entre no painel primeiro.");
   const p={id:document.getElementById("editId").value,name:document.getElementById("pName").value.trim(),category:document.getElementById("pCategory").value.trim(),price:Number(document.getElementById("pPrice").value),stock:Number(document.getElementById("pStock").value),saleType:document.getElementById("pType").value,photo:document.getElementById("pPhoto").value.trim(),description:document.getElementById("pDescription").value.trim(),active:document.getElementById("pActive").checked};
   if(!Number.isFinite(p.price)||p.price<0||!Number.isInteger(p.stock)||p.stock<0)return toast("Confira preço e estoque.");
-  const button=document.getElementById("saveProductButton");button.disabled=true;
-  api("saveProduct",{token:adminToken,product:JSON.stringify(p)}).then(()=>{
+  const button=document.getElementById("saveProductButton");button.disabled=true;button.textContent="Salvando...";
+  const save=()=>api("saveProduct",{token:adminToken,product:JSON.stringify(p)});
+  const photoStep=selectedProductPhoto?uploadProductPhoto(selectedProductPhoto).then(url=>{p.photo=url;}):Promise.resolve();
+  photoStep.then(save).then(()=>{
     toast("Produto salvo.");resetProductForm();loadProducts();loadAdminProducts();
-  }).catch(err=>document.getElementById("productStatus").textContent=err.message).finally(()=>button.disabled=false);
+  }).catch(err=>document.getElementById("productStatus").textContent=err.message).finally(()=>{button.disabled=false;button.textContent="Salvar produto";});
 });
 function loadAdminProducts(){
   api("adminProducts",{token:adminToken}).then(result=>{
@@ -785,7 +833,7 @@ function loadAdminProducts(){
 function editProduct(p){
   document.getElementById("editId").value=p.id;document.getElementById("pName").value=p.name;document.getElementById("pCategory").value=p.category;
   document.getElementById("pPrice").value=p.price;document.getElementById("pStock").value=p.stock;document.getElementById("pType").value=p.saleType;
-  document.getElementById("pPhoto").value=p.photo||"";document.getElementById("pDescription").value=p.description||"";
+  document.getElementById("pPhoto").value=p.photo||"";document.getElementById("pPhotoFile").value="";selectedProductPhoto=null;document.getElementById("photoPreviewWrap").classList.toggle("hidden",!p.photo);if(p.photo){document.getElementById("photoPreview").src=p.photo;document.getElementById("photoPreviewText").textContent="Foto atual (selecione outra para substituir)";}document.getElementById("pDescription").value=p.description||"";
   document.getElementById("pActive").checked=!!p.active;document.getElementById("productFormTitle").textContent="Editar produto";
   document.getElementById("productFormTitle").scrollIntoView({behavior:"smooth"});
 }
