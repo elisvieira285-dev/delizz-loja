@@ -809,12 +809,15 @@ function imageFileToDataUrl(file){
     reader.onload=()=>{
       const img=new Image();img.onerror=()=>reject(new Error("Não foi possível abrir a imagem."));
       img.onload=()=>{
-        const max=1400,scale=Math.min(1,max/Math.max(img.width,img.height));
-        const canvas=document.createElement("canvas");canvas.width=Math.round(img.width*scale);canvas.height=Math.round(img.height*scale);
-        canvas.getContext("2d").drawImage(img,0,0,canvas.width,canvas.height);
-        let quality=.82,data=canvas.toDataURL("image/jpeg",quality);
-        while(data.length>1800000 && quality>.48){quality-=.08;data=canvas.toDataURL("image/jpeg",quality);}
-        if(data.length>1800000)return reject(new Error("A foto ficou muito grande. Escolha uma imagem menor."));
+        // Reduz a imagem antes do envio para acelerar o upload no Google Drive.
+        const max=1000,scale=Math.min(1,max/Math.max(img.width,img.height));
+        const canvas=document.createElement("canvas");canvas.width=Math.max(1,Math.round(img.width*scale));canvas.height=Math.max(1,Math.round(img.height*scale));
+        const ctx=canvas.getContext("2d",{alpha:false});
+        ctx.fillStyle="#ffffff";ctx.fillRect(0,0,canvas.width,canvas.height);
+        ctx.drawImage(img,0,0,canvas.width,canvas.height);
+        let quality=.72,data=canvas.toDataURL("image/jpeg",quality);
+        while(data.length>650000 && quality>.42){quality-=.07;data=canvas.toDataURL("image/jpeg",quality);}
+        if(data.length>650000)return reject(new Error("A foto ainda ficou muito grande. Escolha outra imagem."));
         resolve(data);
       };img.src=reader.result;
     };reader.readAsDataURL(file);
@@ -843,7 +846,7 @@ document.getElementById("productForm").addEventListener("submit",e=>{
   if(!adminToken)return toast("Entre no painel primeiro.");
   const p={id:document.getElementById("editId").value,name:document.getElementById("pName").value.trim(),category:document.getElementById("pCategory").value.trim(),price:Number(document.getElementById("pPrice").value),promoPrice:Number(document.getElementById("pPromoPrice").value||0),stock:Number(document.getElementById("pStock").value),saleType:document.getElementById("pType").value,photo:document.getElementById("pPhoto").value.trim(),description:document.getElementById("pDescription").value.trim(),active:document.getElementById("pActive").checked};
   if(!Number.isFinite(p.price)||p.price<0||!Number.isFinite(p.promoPrice)||p.promoPrice<0|| (p.promoPrice>0&&p.promoPrice>=p.price)||!Number.isInteger(p.stock)||p.stock<0)return toast("Confira os preços: o promocional deve ser menor que o normal.");
-  const button=document.getElementById("saveProductButton");button.disabled=true;button.textContent="Salvando...";
+  const button=document.getElementById("saveProductButton");button.disabled=true;button.textContent=selectedProductPhoto?"Otimizando e enviando foto...":"Salvando...";
   const save=()=>api("saveProduct",{token:adminToken,product:JSON.stringify(p)});
   const photoStep=selectedProductPhoto?uploadProductPhoto(selectedProductPhoto).then(url=>{p.photo=url;}):Promise.resolve();
   photoStep.then(save).then(()=>{
