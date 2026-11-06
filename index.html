@@ -402,7 +402,7 @@ body{background:linear-gradient(180deg,#fff9f6 0%,#fff5f1 100%)}
   </nav>
   <div class="header-actions">
     <button class="icon-button" aria-label="Buscar produtos" onclick="showPage('shop');document.getElementById('search').focus()"><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="10.8" cy="10.8" r="6.8"/><path d="m16 16 5 5"/></svg></button>
-    <button class="icon-button" aria-label="Painel administrativo" onclick="showPage('admin')"><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="7" r="4"/><path d="M4 21c0-4.2 3.3-7 8-7s8 2.8 8 7"/></svg></button>
+
     <button class="icon-button bag-button" aria-label="Abrir sacola" onclick="showPage('cart')"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M5 8h14l1 13H4L5 8Z"/><path d="M9 8V6a3 3 0 0 1 6 0v2"/></svg><span class="cart-bubble" id="cartCount">0</span></button>
 
   </div>
@@ -462,6 +462,9 @@ body{background:linear-gradient(180deg,#fff9f6 0%,#fff5f1 100%)}
     <p class="muted">Confira sua seleção antes de continuar.</p>
     <div id="cartList" class="cart-list"></div>
     <div id="cartSummary" class="summary hidden">
+      <div class="field-group" style="margin-bottom:14px"><label for="couponCode">Cupom de desconto</label><div style="display:flex;gap:8px;flex-wrap:wrap"><input id="couponCode" class="field" style="flex:1;min-width:150px" placeholder="Digite seu cupom"><button type="button" class="soft" onclick="applyCoupon()">Aplicar</button><button type="button" class="outline" onclick="removeCoupon()">Remover</button></div><small id="couponStatus" class="admin-note" role="status"></small></div>
+      <div class="total"><span>Subtotal</span><span id="cartSubtotal">R$ 0,00</span></div>
+      <div class="total" id="cartDiscountRow" style="display:none"><span>Desconto</span><span id="cartDiscount">- R$ 0,00</span></div>
       <div class="total"><span>Total dos produtos</span><span id="cartTotal">R$ 0,00</span></div>
       <div class="panel">
         <h3>Seus dados</h3>
@@ -497,7 +500,8 @@ body{background:linear-gradient(180deg,#fff9f6 0%,#fff5f1 100%)}
           <div class="form-grid">
             <div class="field-group"><label for="pName">Nome *</label><input id="pName" class="field" required maxlength="150"></div>
             <div class="field-group"><label for="pCategory">Categoria *</label><input id="pCategory" class="field" required maxlength="80" placeholder="Skincare, maquiagem..."></div>
-            <div class="field-group"><label for="pPrice">Preço (R$) *</label><input id="pPrice" class="field" type="number" min="0" step="0.01" required></div>
+            <div class="field-group"><label for="pPrice">Preço normal (R$) *</label><input id="pPrice" class="field" type="number" min="0" step="0.01" required></div>
+            <div class="field-group"><label for="pPromoPrice">Preço promocional (R$)</label><input id="pPromoPrice" class="field" type="number" min="0" step="0.01" placeholder="Opcional"><small class="admin-note">Deixe vazio se não houver promoção.</small></div>
             <div class="field-group"><label for="pStock">Estoque *</label><input id="pStock" class="field" type="number" min="0" step="1" required></div>
             <div class="field-group"><label for="pType">Tipo de venda</label><select id="pType" class="field"><option>Pronta entrega</option><option>Sob encomenda</option></select></div>
             <div class="field-group span-all"><label for="pPhotoFile">Foto do produto</label><input id="pPhotoFile" class="field" type="file" accept="image/*"><small class="admin-note">Escolha uma foto do computador ou celular. A imagem será enviada para o Google Drive da loja.</small><div id="photoPreviewWrap" class="hidden" style="margin-top:10px;display:flex;align-items:center;gap:12px"><img id="photoPreview" alt="Prévia da foto" style="width:88px;height:88px;object-fit:cover;border-radius:10px;border:1px solid #ead7d5"><span id="photoPreviewText" class="admin-note">Foto selecionada</span></div><input id="pPhoto" type="hidden" value=""></div>
@@ -511,6 +515,19 @@ body{background:linear-gradient(180deg,#fff9f6 0%,#fff5f1 100%)}
       <div class="panel">
         <h3>Produtos cadastrados</h3>
         <div id="adminProducts" class="cart-list"></div>
+      </div>
+      <div class="panel">
+        <h3>Cupons e promoções</h3>
+        <form id="couponForm" class="form-grid">
+          <div class="field-group"><label for="cCode">Código do cupom *</label><input id="cCode" class="field" maxlength="30" required placeholder="DELIZZ10"></div>
+          <div class="field-group"><label for="cType">Tipo de desconto</label><select id="cType" class="field"><option value="percent">Porcentagem (%)</option><option value="fixed">Valor fixo (R$)</option></select></div>
+          <div class="field-group"><label for="cValue">Desconto *</label><input id="cValue" class="field" type="number" min="0.01" step="0.01" required></div>
+          <div class="field-group"><label for="cMin">Compra mínima (R$)</label><input id="cMin" class="field" type="number" min="0" step="0.01" value="0"></div>
+          <div class="field-group"><label for="cExpiry">Validade (opcional)</label><input id="cExpiry" class="field" type="date"></div>
+          <div class="field-group" style="align-self:end"><label><input id="cActive" type="checkbox" checked> Cupom ativo</label></div>
+          <div class="field-group span-all"><button class="primary" type="submit">Salvar cupom</button><button class="outline" type="button" onclick="resetCouponForm()">Limpar</button></div>
+        </form>
+        <div id="adminCoupons" class="cart-list" style="margin-top:14px"></div>
       </div>
       <div class="panel">
         <h3>Pedidos recebidos</h3>
@@ -546,6 +563,7 @@ body{background:linear-gradient(180deg,#fff9f6 0%,#fff5f1 100%)}
 */
 const API_URL = "https://script.google.com/macros/s/AKfycbyzg256PTcB-fFE_BZCHa-eNjGIOLzbvapvxm_ZT_7W3lk61as4CaLUNnC2iFH4v4N7/exec";
 const WHATSAPP_STORE = "5548999852871";
+// Acesso administrativo discreto: acrescente #admin ao endereço da loja.
 
 let products = [];
 let activeCategoryFilter = "";
@@ -662,7 +680,12 @@ function renderProducts(source) {
     const cat=document.createElement("div");cat.className="category";cat.textContent=p.category||"Outros";
     const name=document.createElement("h3");name.textContent=p.name;
     const desc=document.createElement("p");desc.className="description";desc.textContent=p.description||"";
-    const price=document.createElement("div");price.className="price";price.textContent=money(p.price);
+    const price=document.createElement("div");price.className="price";
+    if(Number(p.promoPrice)>0 && Number(p.promoPrice)<Number(p.price)){
+      const old=document.createElement("span");old.textContent=money(p.price);old.style.cssText="text-decoration:line-through;color:#987f82;font-size:.82em;margin-right:8px;font-weight:400";
+      const current=document.createElement("strong");current.textContent=money(p.promoPrice);current.style.color="#8b1235";price.append(old,current);
+      const tag=document.createElement("span");tag.textContent="OFERTA";tag.style.cssText="display:inline-block;margin-left:8px;padding:3px 7px;background:#f8e7eb;color:#8b1235;border-radius:5px;font-size:10px;letter-spacing:.06em";price.append(tag);
+    } else price.textContent=money(p.price);
     const stock=document.createElement("div");stock.className="stock";stock.textContent=p.saleType==="Sob encomenda"?"Sob encomenda":Number(p.stock)>0?`Disponível: ${p.stock} unidade(s)`:"Indisponível";
     const button=document.createElement("button");button.className="primary";button.textContent=p.saleType==="Sob encomenda"?"Solicitar encomenda":"Adicionar à sacola";
     button.disabled=p.saleType!=="Sob encomenda" && Number(p.stock)<1;
@@ -690,7 +713,7 @@ function addToCart(p) {
   if (existing) {
     if (p.saleType!=="Sob encomenda" && existing.quantity>=Number(p.stock)) return toast("Quantidade máxima disponível atingida.");
     existing.quantity++;
-  } else cart.push({id:p.id,name:p.name,price:Number(p.price),stock:Number(p.stock),saleType:p.saleType,quantity:1});
+  } else cart.push({id:p.id,name:p.name,price:(Number(p.promoPrice)>0&&Number(p.promoPrice)<Number(p.price)?Number(p.promoPrice):Number(p.price)),regularPrice:Number(p.price),stock:Number(p.stock),saleType:p.saleType,quantity:1});
   updateCartCount();toast("Produto adicionado à sacola."); 
 }
 function updateCartCount(){document.getElementById("cartCount").textContent=cart.reduce((s,i)=>s+i.quantity,0);}
@@ -722,7 +745,20 @@ function renderCart() {
     const remove=document.createElement("button");remove.className="remove";remove.textContent="Remover";remove.onclick=()=>{cart=cart.filter(i=>i.id!==item.id);updateCartCount();renderCart();};
     controls.append(minus,count,plus,remove);row.append(detail,controls);list.appendChild(row);
   });
-  document.getElementById("cartTotal").textContent=money(cart.reduce((s,i)=>s+i.price*i.quantity,0));
+  const subtotal=cart.reduce((s,i)=>s+i.price*i.quantity,0);
+  const discount=appliedCoupon?Number(appliedCoupon.discount||0):0;
+  document.getElementById("cartSubtotal").textContent=money(subtotal);
+  document.getElementById("cartDiscountRow").style.display=discount>0?"flex":"none";
+  document.getElementById("cartDiscount").textContent="- "+money(discount);
+  document.getElementById("cartTotal").textContent=money(Math.max(0,subtotal-discount));
+}
+let appliedCoupon=null;
+function removeCoupon(){appliedCoupon=null;document.getElementById("couponCode").value="";document.getElementById("couponStatus").textContent="Cupom removido.";renderCart();}
+function applyCoupon(){
+  const code=document.getElementById("couponCode").value.trim().toUpperCase();
+  const subtotal=cart.reduce((s,i)=>s+i.price*i.quantity,0);
+  if(!code)return toast("Digite o código do cupom.");
+  api("validateCoupon",{code,subtotal:String(subtotal)}).then(r=>{appliedCoupon={code:r.coupon.code,discount:Number(r.discount)};document.getElementById("couponStatus").textContent="Cupom aplicado! Você economiza "+money(r.discount)+".";renderCart();}).catch(e=>{appliedCoupon=null;document.getElementById("couponStatus").textContent=e.message;renderCart();});
 }
 function checkout() {
   const name=document.getElementById("customerName").value.trim();
@@ -731,16 +767,16 @@ function checkout() {
   if(!name||!phone)return toast("Preencha seu nome e WhatsApp.");
   if(!WHATSAPP_STORE)return toast("Configure o WhatsApp comercial no início do index.html.");
   if(!cart.length)return toast("Sua sacola está vazia.");
-  const total=cart.reduce((s,i)=>s+i.price*i.quantity,0);
-  const order={customer:name,phone,notes,total,items:cart.map(i=>({id:i.id,name:i.name,price:i.price,quantity:i.quantity,saleType:i.saleType}))};
+  const subtotal=cart.reduce((s,i)=>s+i.price*i.quantity,0);
+  const order={customer:name,phone,notes,subtotal,couponCode:appliedCoupon?appliedCoupon.code:"",items:cart.map(i=>({id:i.id,name:i.name,price:i.price,quantity:i.quantity,saleType:i.saleType}))};
   const button=document.getElementById("checkoutButton");button.disabled=true;button.textContent="Registrando pedido...";
   api("createOrder",{order:JSON.stringify(order)}).then(result=>{
     const message="Olá! Gostaria de fazer um pedido na DELIZZ.\nPedido: "+result.orderId+"\nCliente: "+name+"\nWhatsApp: "+phone+"\n\n"+
       order.items.map(i=>`• ${i.name} — ${i.quantity} x ${money(i.price)}${i.saleType==="Sob encomenda"?" (sob encomenda)":""}`).join("\n")+
-      "\n\nTotal dos produtos: "+money(total)+(notes?"\nObservações: "+notes:"")+"\n\nAguardo confirmação de disponibilidade, pagamento e entrega.";
+      "\n\nSubtotal: "+money(result.subtotal)+(result.discount>0?"\nCupom "+(result.couponCode||"")+": -"+money(result.discount):"")+"\nTotal dos produtos: "+money(result.total)+(notes?"\nObservações: "+notes:"")+"\n\nAguardo confirmação de disponibilidade, pagamento e entrega.";
     window.open("https://wa.me/"+WHATSAPP_STORE+"?text="+encodeURIComponent(message),"_blank","noopener");
     toast("Pedido registrado. Continue a conversa no WhatsApp.");
-    cart=[];updateCartCount();renderCart();
+    cart=[];appliedCoupon=null;updateCartCount();renderCart();
   }).catch(error=>toast("Não foi possível registrar o pedido: "+error.message))
     .finally(()=>{button.disabled=false;button.textContent="Enviar pedido pelo WhatsApp";});
 }
@@ -751,11 +787,11 @@ function adminLogin() {
     adminToken=result.token;
     document.getElementById("adminLogin").classList.add("hidden");
     document.getElementById("adminWorkspace").classList.remove("hidden");
-    loadAdminProducts();loadOrders();
+    loadAdminProducts();loadOrders();loadAdminCoupons();
   }).catch(error=>document.getElementById("loginStatus").textContent=error.message);
 }
 function adminLogout(){adminToken="";document.getElementById("adminWorkspace").classList.add("hidden");document.getElementById("adminLogin").classList.remove("hidden");document.getElementById("adminPin").value="";}
-function resetProductForm(){document.getElementById("productForm").reset();document.getElementById("editId").value="";document.getElementById("pPhoto").value="";document.getElementById("pPhotoFile").value="";selectedProductPhoto=null;document.getElementById("photoPreviewWrap").classList.add("hidden");document.getElementById("productFormTitle").textContent="Cadastrar produto";document.getElementById("pActive").checked=true;}
+function resetProductForm(){document.getElementById("productForm").reset();document.getElementById("editId").value="";document.getElementById("pPhoto").value="";document.getElementById("pPromoPrice").value="";document.getElementById("pPhotoFile").value="";selectedProductPhoto=null;document.getElementById("photoPreviewWrap").classList.add("hidden");document.getElementById("productFormTitle").textContent="Cadastrar produto";document.getElementById("pActive").checked=true;}
 let selectedProductPhoto = null;
 document.getElementById("pPhotoFile").addEventListener("change", async e=>{
   const file=e.target.files && e.target.files[0];
@@ -792,7 +828,7 @@ function uploadProductPhoto(file){
     const fields={action:"uploadPhoto",token:adminToken,requestId,imageData:dataUrl,filename:file.name||"produto.jpg"};
     Object.entries(fields).forEach(([name,value])=>{const input=document.createElement("input");input.type="hidden";input.name=name;input.value=value;form.appendChild(input);});
     const cleanup=()=>{window.removeEventListener("message",onMessage);form.remove();iframe.remove();};
-    const timer=setTimeout(()=>{cleanup();reject(new Error("Tempo esgotado ao enviar a foto. Tente novamente."));},60000);
+    const timer=setTimeout(()=>{cleanup();reject(new Error("Tempo esgotado ao enviar a foto. Tente novamente."));},120000);
     function onMessage(event){
       const d=event.data;
       if(!d||d.requestId!==requestId)return;
@@ -805,8 +841,8 @@ function uploadProductPhoto(file){
 document.getElementById("productForm").addEventListener("submit",e=>{
   e.preventDefault();
   if(!adminToken)return toast("Entre no painel primeiro.");
-  const p={id:document.getElementById("editId").value,name:document.getElementById("pName").value.trim(),category:document.getElementById("pCategory").value.trim(),price:Number(document.getElementById("pPrice").value),stock:Number(document.getElementById("pStock").value),saleType:document.getElementById("pType").value,photo:document.getElementById("pPhoto").value.trim(),description:document.getElementById("pDescription").value.trim(),active:document.getElementById("pActive").checked};
-  if(!Number.isFinite(p.price)||p.price<0||!Number.isInteger(p.stock)||p.stock<0)return toast("Confira preço e estoque.");
+  const p={id:document.getElementById("editId").value,name:document.getElementById("pName").value.trim(),category:document.getElementById("pCategory").value.trim(),price:Number(document.getElementById("pPrice").value),promoPrice:Number(document.getElementById("pPromoPrice").value||0),stock:Number(document.getElementById("pStock").value),saleType:document.getElementById("pType").value,photo:document.getElementById("pPhoto").value.trim(),description:document.getElementById("pDescription").value.trim(),active:document.getElementById("pActive").checked};
+  if(!Number.isFinite(p.price)||p.price<0||!Number.isFinite(p.promoPrice)||p.promoPrice<0|| (p.promoPrice>0&&p.promoPrice>=p.price)||!Number.isInteger(p.stock)||p.stock<0)return toast("Confira os preços: o promocional deve ser menor que o normal.");
   const button=document.getElementById("saveProductButton");button.disabled=true;button.textContent="Salvando...";
   const save=()=>api("saveProduct",{token:adminToken,product:JSON.stringify(p)});
   const photoStep=selectedProductPhoto?uploadProductPhoto(selectedProductPhoto).then(url=>{p.photo=url;}):Promise.resolve();
@@ -825,14 +861,15 @@ function loadAdminProducts(){
       const controls=document.createElement("div");controls.className="cart-controls";
       const edit=document.createElement("button");edit.className="small";edit.textContent="Editar";edit.onclick=()=>editProduct(p);
       const toggle=document.createElement("button");toggle.className="outline";toggle.textContent=p.active?"Desativar":"Ativar";toggle.onclick=()=>toggleProduct(p);
-      controls.append(edit,toggle);row.append(info,controls);area.appendChild(row);
+      const del=document.createElement("button");del.className="remove";del.textContent="Excluir";del.onclick=()=>deleteProduct(p);
+      controls.append(edit,toggle,del);row.append(info,controls);area.appendChild(row);
     });
     if(!area.children.length)area.textContent="Nenhum produto cadastrado ainda.";
   }).catch(err=>document.getElementById("productStatus").textContent=err.message);
 }
 function editProduct(p){
   document.getElementById("editId").value=p.id;document.getElementById("pName").value=p.name;document.getElementById("pCategory").value=p.category;
-  document.getElementById("pPrice").value=p.price;document.getElementById("pStock").value=p.stock;document.getElementById("pType").value=p.saleType;
+  document.getElementById("pPrice").value=p.price;document.getElementById("pPromoPrice").value=p.promoPrice||"";document.getElementById("pStock").value=p.stock;document.getElementById("pType").value=p.saleType;
   document.getElementById("pPhoto").value=p.photo||"";document.getElementById("pPhotoFile").value="";selectedProductPhoto=null;document.getElementById("photoPreviewWrap").classList.toggle("hidden",!p.photo);if(p.photo){document.getElementById("photoPreview").src=p.photo;document.getElementById("photoPreviewText").textContent="Foto atual (selecione outra para substituir)";}document.getElementById("pDescription").value=p.description||"";
   document.getElementById("pActive").checked=!!p.active;document.getElementById("productFormTitle").textContent="Editar produto";
   document.getElementById("productFormTitle").scrollIntoView({behavior:"smooth"});
@@ -840,6 +877,16 @@ function editProduct(p){
 function toggleProduct(p){
   api("saveProduct",{token:adminToken,product:JSON.stringify({...p,active:!p.active})}).then(()=>{loadProducts();loadAdminProducts();toast("Status atualizado.");}).catch(err=>toast(err.message));
 }
+function deleteProduct(p){
+  if(!confirm("Excluir definitivamente o produto "+p.name+"? Os pedidos antigos serão preservados."))return;
+  api("deleteProduct",{token:adminToken,id:p.id}).then(()=>{toast("Produto excluído.");loadProducts();loadAdminProducts();resetProductForm();}).catch(e=>toast(e.message));
+}
+function resetCouponForm(){document.getElementById("couponForm").reset();document.getElementById("cActive").checked=true;}
+document.getElementById("couponForm").addEventListener("submit",e=>{
+  e.preventDefault();const coupon={code:document.getElementById("cCode").value.trim().toUpperCase(),type:document.getElementById("cType").value,value:Number(document.getElementById("cValue").value),minTotal:Number(document.getElementById("cMin").value||0),expiresAt:document.getElementById("cExpiry").value,active:document.getElementById("cActive").checked};
+  api("saveCoupon",{token:adminToken,coupon:JSON.stringify(coupon)}).then(()=>{toast("Cupom salvo.");resetCouponForm();loadAdminCoupons();}).catch(e=>toast(e.message));
+});
+function loadAdminCoupons(){if(!adminToken)return;api("adminCoupons",{token:adminToken}).then(r=>{const area=document.getElementById("adminCoupons");area.replaceChildren();(r.coupons||[]).forEach(c=>{const row=document.createElement("div");row.className="cart-item";const info=document.createElement("div");const title=document.createElement("strong");title.textContent=c.code;const desc=document.createElement("p");desc.textContent=(c.type==="percent"?c.value+"%":"R$ "+Number(c.value).toFixed(2))+" de desconto • Mínimo: "+money(c.minTotal)+" • "+(c.active?"Ativo":"Inativo")+(c.expiresAt?" • Até "+c.expiresAt:"");info.append(title,desc);const btn=document.createElement("button");btn.className="outline";btn.textContent="Excluir";btn.onclick=()=>{if(confirm("Excluir o cupom "+c.code+"?"))api("deleteCoupon",{token:adminToken,code:c.code}).then(loadAdminCoupons).catch(e=>toast(e.message));};row.append(info,btn);area.append(row);});if(!area.children.length)area.textContent="Nenhum cupom cadastrado.";}).catch(e=>document.getElementById("adminCoupons").textContent=e.message);}
 function loadOrders(){
   if(!adminToken)return;
   api("adminOrders",{token:adminToken}).then(result=>{
@@ -860,6 +907,8 @@ function loadOrders(){
 }
 document.getElementById("search").addEventListener("input",()=>renderProducts(products));
 document.getElementById("categoryFilter").addEventListener("change",()=>{activeCategoryFilter=document.getElementById("categoryFilter").value;document.querySelectorAll(".category-shortcuts button").forEach(b=>b.classList.toggle("selected",normalizeCategory(b.dataset.category)===normalizeCategory(activeCategoryFilter)&&!!activeCategoryFilter));renderProducts(products);});
+window.addEventListener("hashchange",()=>{if(location.hash==="#admin")showPage("admin");else if(location.hash!=="#admin"&&document.getElementById("pageAdmin").classList.contains("hidden")===false)showPage("shop");});
+if(location.hash==="#admin")showPage("admin");
 loadProducts();
 </script>
 </body>
