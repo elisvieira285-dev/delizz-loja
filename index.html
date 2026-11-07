@@ -654,6 +654,21 @@ function updateCategories() {
   select.value = matched ? matched.value : "";
   activeCategoryFilter = current && matched ? matched.value : (current || "");
 }
+function getDisplayPhotoUrl(value) {
+  const raw=String(value||"").trim();
+  if(!raw) return "";
+  // Links compartilhados do Drive abrem o visualizador; para <img>, use o endpoint de miniatura.
+  if(/drive\.google\.com/i.test(raw)){
+    let id="";
+    try{
+      const u=new URL(raw);
+      id=u.searchParams.get("id")||"";
+      if(!id){const m=u.pathname.match(/\/file\/d\/([^/]+)/);if(m)id=m[1];}
+    }catch(e){}
+    if(id) return `https://drive.google.com/thumbnail?id=${encodeURIComponent(id)}&sz=w1200`;
+  }
+  return raw;
+}
 function renderProducts(source) {
   const grid = document.getElementById("productGrid");
   grid.replaceChildren();
@@ -670,8 +685,14 @@ function renderProducts(source) {
     const card = document.createElement("article"); card.className="product";
     const photo = document.createElement("div"); photo.className="product-image";
     if (p.photo && (/^https?:\/\//i.test(p.photo) || /^data:image\//i.test(p.photo))) {
-      const img = document.createElement("img"); img.src=p.photo; img.alt=p.name; img.loading="lazy";
-      img.onerror=()=>{photo.replaceChildren();const ph=document.createElement("span");ph.className="placeholder";ph.textContent="DELIZZ";photo.appendChild(ph);};
+      const img = document.createElement("img"); img.src=getDisplayPhotoUrl(p.photo); img.alt=p.name; img.loading="lazy";
+      img.onerror=()=>{
+        // Segunda tentativa pelo host de imagens do Google, sem alterar a URL guardada na planilha.
+        const raw=String(p.photo||"");
+        const m=raw.match(/[?&]id=([^&]+)/)||raw.match(/\/file\/d\/([^/?]+)/);
+        if(m && !img.dataset.fallback){img.dataset.fallback="1";img.src=`https://lh3.googleusercontent.com/d/${decodeURIComponent(m[1])}=w1200`;return;}
+        photo.replaceChildren();const ph=document.createElement("span");ph.className="placeholder";ph.textContent="DELIZZ";photo.appendChild(ph);
+      };
       photo.appendChild(img);
       photo.tabIndex=0;photo.setAttribute("role","button");photo.setAttribute("aria-label",`Ampliar foto de ${p.name}`);photo.onclick=()=>openProductPhoto(p);photo.onkeydown=e=>{if(e.key==="Enter"||e.key===" "){e.preventDefault();openProductPhoto(p);}};
       const hint=document.createElement("span");hint.className="photo-zoom-hint";hint.textContent="Ampliar foto";photo.appendChild(hint);
@@ -696,7 +717,7 @@ function renderProducts(source) {
 function openProductPhoto(p){
   if(!p || !p.photo)return;
   const modal=document.getElementById("photoLightbox");
-  document.getElementById("photoLightboxImg").src=p.photo;
+  document.getElementById("photoLightboxImg").src=getDisplayPhotoUrl(p.photo);
   document.getElementById("photoLightboxImg").alt=p.name||"Foto do produto";
   document.getElementById("photoLightboxCategory").textContent=p.category||"DELIZZ";
   document.getElementById("photoLightboxTitle").textContent=p.name||"Produto DELIZZ";
