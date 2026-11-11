@@ -385,11 +385,11 @@ body{background:linear-gradient(180deg,#fff9f6 0%,#fff5f1 100%)}
 
 <style id="delizz-hero-slider-style">
 .hero-slider{position:relative;overflow:hidden;margin:0 -50px 0;isolation:isolate}
-.hero-slider-track{display:flex;width:100%;transition:transform .55s cubic-bezier(.22,.75,.25,1);will-change:transform}
+.hero-slider-track{display:flex;width:100%;align-items:stretch;transition:transform .55s cubic-bezier(.22,.75,.25,1);will-change:transform}
 .hero-slide{flex:0 0 100%;min-width:0;position:relative}
-.hero-slider .hero{margin:0;min-height:405px}
-.hero-promo-slide{height:405px;background:#f8e4dc;display:flex;align-items:center;justify-content:center}
-.hero-promo-slide img{display:block;width:100%;height:100%;object-fit:cover;object-position:center}
+.hero-slider .hero{margin:0;min-height:0;height:auto;aspect-ratio:3 / 1;box-sizing:border-box}
+.hero-promo-slide{height:auto;aspect-ratio:3 / 1;background:#f8e4dc;display:flex;align-items:center;justify-content:center;overflow:hidden}
+.hero-promo-slide img{display:block;width:100%;height:100%;object-fit:contain;object-position:center}
 .hero-slider-arrow{position:absolute;z-index:5;top:50%;transform:translateY(-50%);width:42px;height:42px;border:1px solid rgba(255,255,255,.75);border-radius:50%;background:rgba(255,250,247,.86);color:#650a20;font-size:30px;line-height:1;display:grid;place-items:center;box-shadow:0 3px 14px rgba(55,0,15,.12);cursor:pointer}
 .hero-slider-arrow.prev{left:18px}.hero-slider-arrow.next{right:18px}
 .hero-slider-dots{position:absolute;z-index:6;bottom:15px;left:50%;transform:translateX(-50%);display:flex;gap:8px;padding:7px 11px;border-radius:30px;background:rgba(255,250,247,.72);backdrop-filter:blur(5px)}
@@ -397,9 +397,9 @@ body{background:linear-gradient(180deg,#fff9f6 0%,#fff5f1 100%)}
 .hero-slider-dots button.active{width:25px;border-radius:8px;background:#650a20}
 @media(max-width:760px){
  .hero-slider{margin:0 -12px}
- .hero-slider .hero{margin:0;min-height:390px}
- .hero-promo-slide{height:390px}
- .hero-promo-slide img{object-fit:contain}
+ .hero-slider .hero{margin:0;min-height:0;height:auto;aspect-ratio:3 / 1}
+ .hero-promo-slide{height:auto;aspect-ratio:3 / 1}
+ .hero-promo-slide img{width:100%;height:100%;object-fit:contain}
  .hero-slider-arrow{width:34px;height:34px;font-size:25px}
  .hero-slider-arrow.prev{left:8px}.hero-slider-arrow.next{right:8px}
  .hero-slider-dots{bottom:10px}
