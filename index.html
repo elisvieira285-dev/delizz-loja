@@ -1088,7 +1088,7 @@ function loadOrders(){
       info.append(h,d,items);
       const controls=document.createElement("div");controls.className="cart-controls";
       const select=document.createElement("select");select.className="field";["Recebido","Em separação","Aguardando pagamento","Enviado/entregue","Cancelado"].forEach(s=>select.add(new Option(s,s)));select.value=o.status;
-      const save=document.createElement("button");save.className="small";save.textContent="Atualizar";save.onclick=()=>api("updateOrder",{token:adminToken,id:o.id,status:select.value}).then(()=>{toast("Status atualizado.");loadOrders();}).catch(e=>toast(e.message));
+      const save=document.createElement("button");save.className="small";save.textContent="Atualizar";save.onclick=()=>api("updateOrder",{token:adminToken,id:o.id,status:select.value}).then(()=>{toast("Status atualizado.");loadOrders();loadProducts();}).catch(e=>toast(e.message));
       controls.append(select,save);row.append(info,controls);area.appendChild(row);
     });
     if(!area.children.length)area.textContent="Nenhum pedido registrado.";
